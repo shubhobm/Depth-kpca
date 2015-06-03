@@ -160,7 +160,7 @@ setMethod("kpcaLocantore",signature(x="matrix"),
 # determine whether to do depth kpca
   if(is.depth){
 	mult <- kdepth.SP(x, x, kernel)
-#	mult <- 1/mult - 1
+	mult <- 1/mult - 1
   }
   else{
 	mult <- 1
