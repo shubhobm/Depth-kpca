@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 rm(list=ls())
+=======
+Enter file contents hererm(list=ls())
+>>>>>>> 5746fd20528722df13ac0ddb999a60c88c029c27
 setwd("\\\\dfs.com/root/Dept-Decision/Dept-Users/Majumdar/KDPCA/")
 
 library(kernlab)

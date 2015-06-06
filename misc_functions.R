@@ -87,11 +87,7 @@ setReplaceMethod("terms", "prc", function(x, value) {
   x
 })
 
-<<<<<<< HEAD
-setClass("kpcaLocantore", representation(rotated = "matrix", is.depth="logical"),contains="prc")
-=======
 setClass("kpcaLocantore", representation(rotated = "matrix"),contains="prc")
->>>>>>> 5746fd20528722df13ac0ddb999a60c88c029c27
 #accessor functions 
 
 if(!isGeneric("rotated")){
@@ -154,27 +150,22 @@ setMethod("kpcaLocantore",signature(x="matrix"),
     }
   if(!is(kernel,"kernel")) stop("kernel must inherit from class `kernel'")
 
-  # determine whether to do depth kpca
+  ## center data matrix by spatial median
+  sp <- spatial.median(x, kernel, delta)
+#  x <- x - matrix(sp$mu, m, p, byrow=TRUE)
+  km <- kernelMatrix(kernel,x)
+  ww <- matrix(sp$w, m, m, byrow=F)
+  kw <- km + t(ww) %*% km %*% ww - t(ww) %*% km - km %*% ww
+  
+# determine whether to do depth kpca
   if(is.depth){
 	mult <- kdepth.SP(x, x, kernel)
-	mult <- exp(-mult)
+	mult <- 1/mult - 1
   }
   else{
 	mult <- 1
   }
 
-  ## center data matrix by spatial median
-  sp <- spatial.median(x, kernel, delta, deps=mult)
-#  x <- x - matrix(sp$mu, m, p, byrow=TRUE)
-  km <- kernelMatrix(kernel,x)
-  ww <- matrix(sp$w, m, m, byrow=F)
-<<<<<<< HEAD
-  km.ww = km %*% ww
-  kw <- km + t(ww) %*% km %*% ww - t(km.ww) - km.ww
-=======
-  kw <- km + t(ww) %*% km %*% ww - t(ww) %*% km - km %*% ww
->>>>>>> 5746fd20528722df13ac0ddb999a60c88c029c27
-  
   kdsqrt <- mult/sqrt(diag(kw))
   km <- outer(kdsqrt, kdsqrt) * kw
 
@@ -201,11 +192,7 @@ setMethod("kpcaLocantore",signature(x="matrix"),
 })
 
 ## computes the spatial median
-<<<<<<< HEAD
-spatial.median <- function(x, kernel, delta=1e-3, deps=1)
-=======
-spatial.median <- function(x, kernel, delta, deps=1)
->>>>>>> 5746fd20528722df13ac0ddb999a60c88c029c27
+spatial.median <- function(x, kernel, delta)
 {
     dime = dim(x)
     n=dime[1]
@@ -214,18 +201,11 @@ spatial.median <- function(x, kernel, delta, deps=1)
     mu0=apply(x,2,median)
     h=delta1+1
     tt=0
-    if(length(deps)>1){
-      deps2 = outer(deps,deps)
-    }
-    else{
-      deps2 = 1
-    }
-
     while(h>delta1)
     {
         tt=tt+1
         TT=matrix(mu0,n,p,byrow=TRUE)
-        U=kernelMatrix(kernel, (x - TT))
+        U=kernelMatrix(kernel, x - TT)
         w=sqrt(apply(U,1,sum))
         w0=median(w)
         ep=delta*w0
@@ -278,36 +258,6 @@ kdepth.SP = function(xx, x, kernel="rbfdot", kpar = list(sigma = 0.1)){
   dep.vec
 }
 
-<<<<<<< HEAD
-## function to reconstruct pre-image given a kpca model
-## unstable... looking for new algo
-recon = function(model, newdata, ep=1e-3, maxit=1e2){
-	xdata = xmatrix(model)
-	proj = kernelMatrix(kernelf(model), newdata, xdata) %*% pcv(model)
-	gamma = proj %*% t(pcv(model))
-
-	delta = 1e3
-	z0 = matrix(newdata[1,1], nrow=nrow(newdata), ncol=ncol(newdata), byrow=T)
-	iter=0
-	while(delta>ep & iter<maxit){
-		km.gamma = kernelMatrix(kernelf(model), z0, xdata) * gamma
-		numerat = km.gamma %*% xdata
-		denom = apply(km.gamma, 1, sum)
-		z1 = numerat/as.numeric(denom)
-		diff = abs((z1-z0)/z0)
-		delta = mean(diff, na.rm=T)
-		iter = iter+1
-		z0=z1
-	}
-	z1
-}
-
-#s = z1
-#sm = matrix(s[1,], nrow=480, byrow=F)
-#plot(imagematrix(sm))
-
-=======
->>>>>>> 5746fd20528722df13ac0ddb999a60c88c029c27
 ## function to generate from multivariate normal
 my.mvrnorm = function(n, mu, Sigma){
   p = length(mu)
@@ -328,13 +278,3 @@ ones = function(m,n){
   matrix(1, nrow=m, ncol=n)
 }
 
-<<<<<<< HEAD
-## function to get best gaussian kernel for data
-## uses sigma = .5 times mean knn distance
-tau = function(x, k=5){
-	dist = get.knn(x, k=k)
-	mean(dist$nn.dist)/2	
-}
-
-=======
->>>>>>> 5746fd20528722df13ac0ddb999a60c88c029c27

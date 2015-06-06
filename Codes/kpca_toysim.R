@@ -56,4 +56,8 @@ cmod.kpcDep = kpcaLocantore(dataf, features=1, is.depth=TRUE, kernel=kf)
 
 abs(mean(pc.kpc * scale(pcv(cmod.kpc))))
 abs(mean(pc.kpc * scale(pcv(cmod.kpcLoc))))
+<<<<<<< HEAD
 abs(mean(pc.kpc * scale(pcv(cmod.kpcDep))))
+=======
+abs(mean(pc.kpc * scale(pcv(cmod.kpcDep))))
+>>>>>>> 5746fd20528722df13ac0ddb999a60c88c029c27
