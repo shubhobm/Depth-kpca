@@ -138,7 +138,7 @@ kdepth.SP = function(xx, x, kernel="rbfdot", kpar = list(sigma = 0.1)){
   dep.vec
 }
 
-## function to reconstruct pre-image given a kpca model
+### Preimage algorithm due to Kwok-Tsan
 reconKwok = function(model, newdata, k=10){
 
 	if(class(model)=="kpcaLocantore"){
@@ -148,58 +148,50 @@ reconKwok = function(model, newdata, k=10){
 		eig = model$eig
 		
 		# get kernel matrix and center accordingly
-		kx = kernelMatrix(kern, newdata, xdata)
-		km = kernelMatrix(kern, xdata)
-		kmbar = as.numeric(km %*% model$centerwts)
-		kx = t(t(kx - kmbar) * model$kdsqrt)
-		km = t(t(km - kmbar) * outer(model$kdsqrt, model$kdsqrt)) # optional (*)
+		kx = kernelMatrix(kernel=model$kernelf, newdata, xdata)
+		kx.w = as.numeric(kx %*% model$centerwts)
+		kx = t(t(kx - kx.w) * model$kdsqrt)
 	}
-	else{
+	else {
 		xdata = xmatrix(model)
 		kern = kernelf(model)
 		P = pcv(model)
 		eig = eig(model)
 		kx = kernelMatrix(kern, newdata, xdata)
-		km = kernelMatrix(kern, xdata)
-		kmbar = colMeans(km)
 	}
 	kx = t(kx)
-	kmbar = colMeans(km) # optional if km is scaled above (*)
+	km = kernelMatrix(kern, xdata)
+
+	N = nrow(xdata)
+	o = rep(1, N)
+	H = diag(o) - o %*% t(o)/N
+	M = P %*% t(P)
+	HtMH = t(H) %*% M %*% H
+	kmbar = colMeans(km)
 	kxPlus = kx + kmbar
 	kxMinus = kx - kmbar
 
-	N = nrow(xdata)
-	onex = rep(1, N)
-	H = diag(onex) - onex %*% t(onex)/N
-
-	M = P %*% (t(P) * eig)
-	HtMH = t(H) %*% M %*% H
-	s1 = diag(t(kxPlus) %*% HtMH %*% kxMinus) + mean(kmbar)
-	s2 = diag(km)
-	s3 = km %*% HtMH %*% kxMinus + kmbar
-	
-	df2 = (outer(s1,s2, "+") - t(2*s3))
-	d2 = -kpar(kern)$sigma * log(1-df2/2)
+	q = HtMH %*% kxMinus
+	const = rowSums(kxPlus*q) + mean(kmbar) + 1
+	df2 = (-2 * km %*% q - 2*kmbar + const)
 
 	z1 = newdata
-	Hxdata = H %*% xdata
-	xmean = matrix(1, ncol=N, nrow=1) %*% xdata / N
+	xmean = matrix(1, ncol=nrow(xdata), nrow=1) %*% xdata /nrow(xdata)
 	for(i in 1:nrow(newdata)){
-		isort = sort((d2[i,]), index.return=TRUE)
-		iX = Hxdata[isort$ix[1:k],]
+		isort = sort((df2[,i]), index.return=TRUE)
+		iX = xdata[isort$ix[1:k],]
 		id = isort$x[1:k]
 		isvd = svd(iX)
-		id0 = apply((isvd$u * isvd$d)^2, 1, sum)
+		id0 = apply((isvd$d * t(isvd$u))^2, 1, sum)
 		z1[i,] = -0.5 * t((isvd$u * 1/isvd$d) %*% t(isvd$v)) %*% (id-id0)
 		z1[i,] = z1[i,] + xmean
 	}
 	z1
 }
 
-
 ## function to reconstruct pre-image given a kpca model
 ## unstable... looking for new algo
-reconMika = function(model, newdata, ep=1e-7, maxit=1e3){
+reconMika = function(model, newdata, ep=1e-3, maxit=1e2){
 
 	if(class(model)=="kpcaLocantore"){
 		xdata = model$xmatrix
