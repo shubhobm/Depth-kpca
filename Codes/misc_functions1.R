@@ -1,10 +1,13 @@
-## kpcaLocantore function
-## author : sbm
-## Same syntax as kpca in package kernlab
-## v1: only matrix inputs supported
+## source functions required for depth-based kernel PCA
+## author : SBM
+
+## kpcaLocantore: function for spherical and depth kernel PCA
 ## Matrix Interface
+## is.depth = FALSE (default) -> spherical (Locantore) PCA
+## is.depth = TRUE -> depth PCA
+
 kpcaLocantore = function(x, kernel = "rbfdot", kpar = list(sigma = 0.1),
-	features = 0, th = 1e-4, delta=0.001, is.depth=FALSE, na.action = na.omit,
+	features = 0, th = 1e-4, delta=1e-3, is.depth=FALSE, na.action = na.omit,
 	...)
 {
   x <- na.action(x)
@@ -28,9 +31,13 @@ kpcaLocantore = function(x, kernel = "rbfdot", kpar = list(sigma = 0.1),
 	mult <- 1
   }
 
-  ## center data matrix by spatial median
+  # center data matrix by spatial median
+  # TODO: we can also do depth-based spatial median: but need theory
+  # for that which hasn't been worked out yet
   sp <- spatial.median(x, kernel, delta, deps=mult)
 #  x <- x - matrix(sp$mu, m, p, byrow=TRUE)
+
+  ## obtain kernel matrix
   km <- kernelMatrix(kernel,x)
   ww <- matrix(sp$w, m, m, byrow=F)
   km.ww = km %*% ww
@@ -39,10 +46,10 @@ kpcaLocantore = function(x, kernel = "rbfdot", kpar = list(sigma = 0.1),
   kdsqrt <- mult/sqrt(diag(kw))
   km <- outer(kdsqrt, kdsqrt) * kw
 
-  ## center kernel matrix
+  # center kernel matrix
   kc <- t(t(km - colSums(km)/m) -  rowSums(km)/m) + sum(km)/m^2
 
-  ## compute eigenvectors
+  # compute eigenvectors
   res <- eigen(kc/m,symmetric=TRUE)
   
   if(features == 0)
@@ -64,7 +71,7 @@ kpcaLocantore = function(x, kernel = "rbfdot", kpar = list(sigma = 0.1),
   ret
 }
 
-## computes the spatial median
+## spatial.median: computes the spatial median given data x
 spatial.median <- function(x, kernel, delta=1e-3, deps=1)
 {
     dime = dim(x)
@@ -74,12 +81,15 @@ spatial.median <- function(x, kernel, delta=1e-3, deps=1)
     mu0=apply(x,2,median)
     h=delta1+1
     tt=0
-    if(length(deps)>1){
-      deps2 = outer(deps,deps)
-    }
-    else{
-      deps2 = 1
-    }
+
+# setting deps=mult and multiplying U below with deps2 will give depth-weighted spatial median:
+# worth exploring
+#    if(length(deps)>1){
+#      deps2 = outer(deps,deps)
+#    }
+#    else{
+#      deps2 = 1
+#    }
 
     while(h>delta1)
     {
@@ -105,10 +115,11 @@ spatial.median <- function(x, kernel, delta=1e-3, deps=1)
     out
 }
 
+## kdepth.SP: computes kernelized spatial depth for points in xx given data x and a kernel
 kdepth.SP = function(xx, x, kernel="rbfdot", kpar = list(sigma = 0.1)){
   n = nrow(x)
   
-  ## initialize kernel matrix
+  # initialize kernel matrix
   if(!is(kernel,"kernel"))
     {
       if(is(kernel,"function")) kernel <- deparse(substitute(kernel))
@@ -138,9 +149,11 @@ kdepth.SP = function(xx, x, kernel="rbfdot", kpar = list(sigma = 0.1)){
   dep.vec
 }
 
-## function to reconstruct pre-image given a kpca model
+## reconKwok: function to reconstruct pre-image given a kpca model,
+## by Kwok and Tsan method: stable
 reconKwok = function(model, newdata, k=10){
 
+	# get kernel matrices, based on what type of pca we are doing
 	if(class(model)=="kpcaLocantore"){
 		xdata = model$xmatrix
 		kern = model$kernelf
@@ -168,6 +181,7 @@ reconKwok = function(model, newdata, k=10){
 	kxPlus = kx + kmbar
 	kxMinus = kx - kmbar
 
+	# compute summands
 	N = nrow(xdata)
 	onex = rep(1, N)
 	H = diag(onex) - onex %*% t(onex)/N
@@ -178,9 +192,11 @@ reconKwok = function(model, newdata, k=10){
 	s2 = diag(km)
 	s3 = km %*% HtMH %*% kxMinus + kmbar
 	
+	# get distances
 	df2 = (outer(s1,s2, "+") - t(2*s3))
 	d2 = -kpar(kern)$sigma * log(1-df2/2)
 
+	# reconstruct
 	z1 = newdata
 	Hxdata = H %*% xdata
 	xmean = matrix(1, ncol=N, nrow=1) %*% xdata / N
@@ -196,11 +212,11 @@ reconKwok = function(model, newdata, k=10){
 	z1
 }
 
-
-## function to reconstruct pre-image given a kpca model
-## unstable... looking for new algo
+## reconMika: function to reconstruct pre-image given a kpca model,
+## by Mika et al method: unstable
 reconMika = function(model, newdata, ep=1e-7, maxit=1e3){
 
+	# get kernel matrices, based on what type of pca we are doing
 	if(class(model)=="kpcaLocantore"){
 		xdata = model$xmatrix
 		kern = model$kernelf
@@ -219,6 +235,7 @@ reconMika = function(model, newdata, ep=1e-7, maxit=1e3){
 	}
 	gamma = km %*% P %*% t(P)
 
+	# reconstruct iteratively
 	delta = 1e3
 	z0 = newdata
 	iter=0
@@ -245,7 +262,7 @@ reconMika = function(model, newdata, ep=1e-7, maxit=1e3){
 #sm = matrix(s, nrow=480, byrow=F)
 #plot(imagematrix(sm))
 
-## function to generate from multivariate normal
+## my.mvrnorm: function to generate from multivariate normal
 my.mvrnorm = function(n, mu, Sigma){
   p = length(mu)
   # compute square root of covariance matrix
@@ -261,11 +278,7 @@ my.mvrnorm = function(n, mu, Sigma){
   return(sample.matrix)
 }
 
-ones = function(m,n){
-  matrix(1, nrow=m, ncol=n)
-}
-
-## function to get best gaussian kernel for data
+## tau: function to get best gaussian kernel for data by knn method
 ## uses sigma = .5 times mean knn distance
 tau = function(x, k=5){
 	dist = get.knn(x, k=k)
