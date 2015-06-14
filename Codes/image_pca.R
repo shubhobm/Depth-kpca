@@ -7,7 +7,7 @@ library(png)
 lenna.orig <- readPNG("Codes/lenna.png")
 res <- prcomp(lenna.orig, center = TRUE, scale = FALSE)
 res.kpca <- KPCA(lenna.orig,nfeatures = 20)
-pcnum <- 20 #Use first 20 principal components
+pcnum <- 1 #Use first 20 principal components
 lenna.trunc <- res$x[,1:pcnum] %*% t(res$rotation[,1:pcnum])
 #how to recover image in kpca?
 #lenna.trunc.kpc <- res.kpca$proj%*%t(res.kpca$pc)%*%res.kpca$x
