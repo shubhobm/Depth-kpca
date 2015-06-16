@@ -68,13 +68,13 @@ for(i in 4:(n+3)){
 }
 img.mat0[2*n+7,] = as.numeric(t1)
 
-i = 7 # change i to 7, 27 or 47 for 3 different persons
-sm = matrix(img.mat[i,], nrow=a, byrow=F)
+i = 47 # change i to 7, 27 or 47 for 3 different persons
+sm = matrix(img.mat[i,], nrow=a, byrow=T)
 plot(imagematrix(sm))
 
 ## choose kernel
 #k = rbfdot(1/(2*tau(img.mat)))
-k = rbfdot(- 1/mean(log(kernelMatrix(rbfdot(.0005), img.mat))/.0005))
+(k = rbfdot(- 1/mean(log(kernelMatrix(rbfdot(.0005), img.mat))/.0005)))
 #k = rbfdot(.0005)
 
 ## Change number of features and compare plots
@@ -97,11 +97,24 @@ plot(mod.kpcLoc[[2]]$rotated, col=cols, pch=19)
 plot(mod.kpcDep[[2]]$rotated, col=cols, pch=19)
 par(mfrow=c(1,1))
 
+### original and contaminated images: 7, 26 and 47
+defaultPar = par()
+par(mfrow=c(3,2), mai=rep(0.1,4))
+for(i in c(7,27,47)){
+  sm = matrix(img.mat0[i,], nrow=a, byrow=F)
+  plot(imagematrix(sm))
+  
+  sm = matrix(img.mat[i,], nrow=a, byrow=F)
+  plot(imagematrix(sm))
+}
+par(defaultPar)
+
 ###### plot all results for one some image sample
 ### Reconstruction by Kwok and Tsan method
 ### img.mat = denoising, img.mat0 = basis retrieval
+i = 7
 defaultPar = par()
-par(mfcol=c(3,7), mai=rep(0,4))
+par(mfrow=c(5,3), mai=rep(0.1,4))
 for(nf in 2*(1:5)){
 	s = reconKwok(mod.kpc[[nf]], img.mat[i:(i+1),], k=5)
 	sm = matrix(s[1,], nrow=a, byrow=F)
@@ -115,13 +128,4 @@ for(nf in 2*(1:5)){
 	sm = matrix(s[1,], nrow=a, byrow=F)
 	plot(imagematrix(sm))
 }
-sm = matrix(img.mat0[i,], nrow=a, byrow=F)
-plot(imagematrix(sm))
-plot(imagematrix(sm))
-plot(imagematrix(sm))
-
-sm = matrix(img.mat[i,], nrow=a, byrow=F)
-plot(imagematrix(sm))
-plot(imagematrix(sm))
-plot(imagematrix(sm))
 par(defaultPar)
