@@ -5,7 +5,7 @@
 # Simulation framework of Mika et al
 ntrain <- 100
 ntest <- 33
-sigma <- 1
+sigma <- 0.25
 set.seed(12345)
 #Error vectors
 err_pc <- numeric(11)
@@ -51,6 +51,9 @@ for(i in 1:11){
 
 err <- rbind(err_pc,err_kpc,err_kpcLoc,err_kpcDep)
 apply(err,1,mean)
+
+
+
 # 
 # #x <- matrix(rnorm(10*(ntrain + ntest),sd=sigma),ncol=10)
 # x.test <- x[-(1:100),]
