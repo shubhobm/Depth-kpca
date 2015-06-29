@@ -13,11 +13,75 @@ err_kpc <- numeric(11)
 err_kpcLoc <- numeric(11)
 err_kpcDep <- numeric(11)
 
-
+err_pc2 <- numeric(11)
+err_kpc2 <- numeric(11)
+err_kpcLoc2 <- numeric(11)
+err_kpcDep2 <- numeric(11)
 mu <- matrix(runif(11*10,min=-1,max=1),nrow=11,ncol=10)
 
+sim1 <- function(mu = mu, pcnum = 1){
 for(i in 1:11){
-  x <- matrix(rnorm(10*(ntrain + ntest),mean=mu[i,],sd=sigma),ncol=10)
+  for(j in 1:10){
+    x[,j] <- rnorm(ntrain+ntest,mean = mu[i,j],sd=sigma)
+  }
+  
+  x.test <- x[-(1:100),]
+  x.train <- x[1:100,]
+  #PCA
+  res <- prcomp(x.train, center = TRUE, scale = FALSE)
+  test.res <- predict(res,x.test)
+  res.trunc <- test.res[,1:pcnum] %*% t(res$rotation[,1:pcnum])
+  
+  if(res$scale != FALSE){
+    res.trunc <- scale(res.trunc, center = FALSE , scale=1/res$scale)
+  }
+  if(res$center != FALSE){
+    res.trunc <- scale(res.trunc, center = -1 * res$center, scale=FALSE)
+  }
+  #Kernel Choise
+  k = rbfdot(- 1/mean(log(kernelMatrix(rbfdot(.0005), x.train))/.0005))
+  #KPCA
+  mod.kpc <- kpca(x.train, features=pcnum, kernel=k)
+  mod.kpcLoc <- kpcaLocantore(x.train, features=pcnum, kernel=k)
+  mod.kpcDep <- kpcaLocantore(x.train, features=pcnum, is.depth=TRUE, kernel=k)
+  #Reconstruct
+  s_kpc.Kw = reconKwok(mod.kpc, x.test, k=5)
+  s_kpcLoc.Kw <- reconKwok(mod.kpcLoc, x.test, k=5)
+  s_kpcDep.Kw <- reconKwok(mod.kpcDep, x.test, k=5)
+  #Mean squared Dist
+#   err_pc[i] <- norm(scale(res.trunc,center=mu[i,],scale = FALSE),type="F")
+#   err_kpc[i] <- norm(scale(s_kpc.Kw,center=mu[i,],scale = FALSE),type="F")
+#   err_kpcLoc[i] <- norm(scale(s_kpcLoc.Kw,center=mu[i,],scale = FALSE),type="F")
+#   err_kpcDep[i] <- norm(scale(s_kpcDep.Kw,center=mu[i,],scale = FALSE),type="F")
+#   
+  ## Take mean first and then error:
+  
+  x.pc <- apply(res.trunc,2,mean)
+  x.kpc <- apply(s_kpc.Kw, 2, mean)
+  x.kpcLoc <- apply(s_kpcLoc.Kw,2,mean)
+  x.kpcDep <- apply(s_kpcDep.Kw,2,mean)
+  
+  err_pc2[i] <- crossprod(x.pc - mu[i,])
+  err_kpc2[i] <- crossprod(x.kpc - mu[i,])
+  err_kpcDep2[i] <- crossprod(x.kpcDep - mu[i,])
+  err_kpcLoc2[i] <- crossprod(x.kpcLoc - mu[i,])
+}
+
+
+err2 <- rbind(err_pc2,err_kpc2,err_kpcLoc2,err_kpcDep2)
+out <- apply(err2,1,mean)
+out
+}
+
+
+result <- matrix(NA, nrow=9,ncol=4)
+for(i in 1:9) result[i,] <- sim1(mu = mu, pcnum = i)
+
+
+############ Try out Other errors ########
+
+for(i in 1:11){
+  x <- matrix(rcauchy(10*(ntrain + ntest),location =mu[i,],scale=sigma),ncol=10)
   x.test <- x[-(1:100),]
   x.train <- x[1:100,]
   #PCA
@@ -48,11 +112,6 @@ for(i in 1:11){
   err_kpcLoc[i] <- norm(scale(s_kpcLoc.Kw,center=mu[i,],scale = FALSE),type="F")
   err_kpcDep[i] <- norm(scale(s_kpcDep.Kw,center=mu[i,],scale = FALSE),type="F")
 }
-
-err <- rbind(err_pc,err_kpc,err_kpcLoc,err_kpcDep)
-apply(err,1,mean)
-
-
 
 # 
 # #x <- matrix(rnorm(10*(ntrain + ntest),sd=sigma),ncol=10)
