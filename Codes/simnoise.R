@@ -77,6 +77,14 @@ out
 result <- matrix(NA, nrow=9,ncol=4)
 for(i in 1:9) result[i,] <- sim1(mu = mu, pcnum = i)
 
+datresult <- data.frame(result)
+
+colnames(datresult) <- c("PC","KPC","KCPC","KDPC")
+datresult$n <- 1:9
+dat.melt <- melt(datresult, id="n")
+ggplot(data=dat.melt,
+       aes(x=n, y=value, colour=variable)) +
+  geom_line()
 
 ############ Try out Other errors ########
 
