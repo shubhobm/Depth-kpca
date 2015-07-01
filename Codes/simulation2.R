@@ -67,7 +67,7 @@ for(i in 1:51){
   dist.Dep[i] <- vecdist(pcv(mod.kpc),mod.kpcDep$pcv)
 }
 
-dat_theta <- data.frame(num = out_num[1:20], dep = theta.Dep[1:20], loc = theta.Loc[1:20])
+dat_theta <- data.frame(num = 1:20, dep = theta.Dep[1:20], loc = theta.Loc[1:20])
 dat_theta_melt <- melt(dat_theta, id = "num")
 ggplot(data=dat_theta_melt,
 aes(x=num, y=value, colour=variable)) +

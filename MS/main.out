@@ -1,0 +1,14 @@
+\BOOKMARK [1][-]{section.1}{INTRODUCTION}{}% 1
+\BOOKMARK [1][-]{section.2}{Preliminaries}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{Kernel Principal Component Analysis}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{Depth functions, and kernel depth}{section.2}% 4
+\BOOKMARK [1][-]{section.3}{Depth-based PCA and its kernelized version}{}% 5
+\BOOKMARK [1][-]{section.4}{Simulations}{}% 6
+\BOOKMARK [2][-]{subsection.4.1}{Effect of the number of features}{section.4}% 7
+\BOOKMARK [2][-]{subsection.4.2}{Effect of number of outliers}{section.4}% 8
+\BOOKMARK [1][-]{section.5}{Application: fast and accurate image denoising}{}% 9
+\BOOKMARK [2][-]{subsection.5.1}{Image reconstruction}{section.5}% 10
+\BOOKMARK [2][-]{subsection.5.2}{Signal-to-Noise Ratio comparison}{section.5}% 11
+\BOOKMARK [1][-]{section.6}{Real-time denoising of high-resolution image sequences}{}% 12
+\BOOKMARK [1][-]{section.7}{Conclusion}{}% 13
+\BOOKMARK [1][-]{section*.3}{References}{}% 14
